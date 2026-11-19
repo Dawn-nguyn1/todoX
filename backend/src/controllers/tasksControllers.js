@@ -1,5 +1,14 @@
-export const getAllTasks = (req, res) => {
-    res.send("Hello task the backend!");
+import Task from "../models/Task.js";
+
+export const getAllTasks = async (req, res) => {
+    try {
+        const tasks = await Task.find(); // lay all tasks tu database
+        res.status(200).json(tasks);
+    } catch (error) {
+        // res.status(500).json({ message: error.message });
+        console.error(`Error retrieving tasks`,error);
+        res.status(500).json({ message: "System error occurred" });
+    }
 }
 
 export const createTask = (req, res) => {
