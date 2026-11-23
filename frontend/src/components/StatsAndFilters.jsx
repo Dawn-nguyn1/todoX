@@ -4,14 +4,9 @@ import { FilterType } from '@/lib/data';
 import { Button } from './ui/button';
 import { Filter } from 'lucide-react';
 
-const StatsAndFilters = (
-  {
-    completedTasksCount = 0,
-    activeTasksCount = 0,
-    filter = "all",
-    // setFilter,
-  }
-) => {
+const StatsAndFilters = (props,) => {
+  const { activeTasksCount, completedTasksCount, filter, setFilter } = props;
+
   return (
     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       {/* phần thống kê */}
@@ -38,7 +33,7 @@ const StatsAndFilters = (
             variant={filter === type ? "gradient" : "ghost"} // filter all thì là gradient, còn lại là ghost
             size="sm"
             className="capitalize"
-            // onClick={() => setFilter(type)}
+            onClick={() => setFilter(type)}
           >
             <Filter className="size-4"/> 
             {FilterType[type]}   {/* truy xuất đến key và lấy value của key đó trong FilterType,xài như mảng  */}
