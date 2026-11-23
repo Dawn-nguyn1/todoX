@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AddTask from "../components/AddTask";
 import DateTimeFilter from "../components/DateTimeFilter";
 import Footer from "../components/Footer";
@@ -6,30 +6,41 @@ import Header from "../components/Header";
 import StatsAndFilters from "../components/StatsAndFilters";
 import TaskList from "../components/TaskList";
 import TaskListPagination from "../components/TaskListPagination";
+import { toast } from "sonner";
+import axios from "axios";
 
-// const initialTasks = [
-//   { id: 1, title: "Chào mừng đến với TodoX", description: "Tạo nhiệm vụ đầu tiên của bạn", completed: false },
-//   { id: 2, title: "Khám phá giao diện", description: "Thử bộ lọc và các thao tác bên dưới", completed: true },
-// ];
+
 
 const HomePage = () => {
-  // const [tasks, setTasks] = useState(initialTasks);
-  // const [filter, setFilter] = useState("all");
-  // const [dateQuery, setDateQuery] = useState("");
-  // const [page, setPage] = useState(1);
+ const {taskBuffer, setTaskBuffer} = useState([]);
+   const [activeTaskCount, setActiveTaskCount] = useState(0);
+  const [completedTaskCount, setCompletedTaskCount] = useState(0);
+  const [filter, setFilter] = useState(0);
 
-  // const visibleTasks = useMemo(() => {
-  //   return tasks.filter((task) => {
-  //     const matchesFilter = filter === "all" || (filter === "active" ? !task.completed : task.completed);
-  //     const matchesDate = !dateQuery || task.createdAt === dateQuery;
-  //     return matchesFilter && matchesDate;
-  //   });
-  // }, [dateQuery, filter, tasks]);
+  //fetch API
+ const fetchTasks = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/tasks");
+      setTaskBuffer(res.data.tasks);
+      setActiveTaskCount(res.data.activeCount);
+      setCompletedTaskCount(res.data.completeCount);
+    } catch (error) {
+      console.error("Lỗi xảy ra khi truy xuất tasks:", error);
+      toast.error("Lỗi xảy ra khi truy xuất tasks.");
+    }
+  };
+  
+  // filtered task
+  const filteredTasks = taskBuffer.filter((task) => {
+    if (filter === "all") return true;
+    if (filter === "active") return task.status === "active";
+    if (filter === "completed") return task.status === "completed";
+    return true;
+  });
 
-  // const handleNewTaskAdded = (task) => setTasks((current) => [task, ...current]);
-  // const handleTaskChanged = (id) => {
-  //   setTasks((current) => current.map((task) => task.id === id ? { ...task, completed: !task.completed } : task));
-  // };
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
     return (
     <div className="min-h-screen w-full bg-[#fefcff] relative">
@@ -55,15 +66,15 @@ const HomePage = () => {
 
           {/* Thống Kê và Bộ lọc */}
           <StatsAndFilters
-            // filter={filter}
-            // setFilter={(nextFilter) => { setFilter(nextFilter); setPage(1); }}
-            // activeTasksCount={tasks.filter((task) => !task.completed).length}
-            // completedTasksCount={tasks.filter((task) => task.completed).length}
+            activeTaskCount={activeTaskCount}
+            completedTaskCount={completedTaskCount}
+            filter={filter}
+            setFilter={setFilter}
           />
 
           {/* Danh Sách Nhiệm Vụ */}
           <TaskList
-            // filteredTasks={visibleTasks}
+            filteredTasks={filteredTasks}
             // handleTaskChanged={handleTaskChanged}
           />
 
@@ -84,8 +95,8 @@ const HomePage = () => {
 
           {/* Chân Trang */}
           <Footer
-            // activeTasksCount={tasks.filter((task) => !task.completed).length}
-            // completedTasksCount={tasks.filter((task) => task.completed).length}
+            activeTaskCount={activeTaskCount}
+            completedTaskCount={completedTaskCount}
           />
         </div>
       </div>
