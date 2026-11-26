@@ -7,7 +7,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Toaster />
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="*" element={<NotFound />} />
