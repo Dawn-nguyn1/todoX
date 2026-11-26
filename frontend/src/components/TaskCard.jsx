@@ -43,7 +43,6 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
           status: "complete",
           completedAt: new Date().toISOString(),
         });
-
         toast.success(`${task.title} đã hoàn thành.`);
       } else {
         await api.put(`/tasks/${task._id}`, {

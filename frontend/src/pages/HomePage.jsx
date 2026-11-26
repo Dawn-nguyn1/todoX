@@ -1,52 +1,89 @@
-import { useEffect, useMemo, useState } from "react";
-import AddTask from "../components/AddTask";
-import DateTimeFilter from "../components/DateTimeFilter";
-import Footer from "../components/Footer";
-import Header from "../components/Header";
-import StatsAndFilters from "../components/StatsAndFilters";
-import TaskList from "../components/TaskList";
-import TaskListPagination from "../components/TaskListPagination";
+import AddTask from "@/components/AddTask";
+import DateTimeFilter from "@/components/DateTimeFilter";
+import Footer from "@/components/Footer";
+import Header  from "@/components/Header";
+import StatsAndFilters from "@/components/StatsAndFilters";
+import TaskList from "@/components/TaskList";
+import TaskListPagination from "@/components/TaskListPagination";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
-
-
+import api from "@/lib/axios";
+import { visibleTaskLimit } from "@/lib/data";
 
 const HomePage = () => {
- const {taskBuffer, setTaskBuffer} = useState([]);
-   const [activeTaskCount, setActiveTaskCount] = useState(0);
-  const [completedTaskCount, setCompletedTaskCount] = useState(0);
-  const [filter, setFilter] = useState(0);
+  const [taskBuffer, setTaskBuffer] = useState([]);
+  const [activeTaskCount, setActiveTaskCount] = useState(0);
+  const [completeTaskCount, setCompleteTaskCount] = useState(0);
+  const [filter, setFilter] = useState("all");
+  const [dateQuery, setDateQuery] = useState("today");
+  const [page, setPage] = useState(1);
 
-  //fetch API
- const fetchTasks = async () => {
+  // logic
+  const fetchTasks = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/tasks");
+      const res = await api.get(`/tasks?filter=${dateQuery}`);
       setTaskBuffer(res.data.tasks);
       setActiveTaskCount(res.data.activeCount);
-      setCompletedTaskCount(res.data.completeCount);
+      setCompleteTaskCount(res.data.completeCount);
     } catch (error) {
       console.error("Lỗi xảy ra khi truy xuất tasks:", error);
       toast.error("Lỗi xảy ra khi truy xuất tasks.");
     }
   };
 
-    const handleTaskChanged = () => {
+  const handleTaskChanged = () => {
     fetchTasks();
   };
-  
-  // filtered task
+
+  const handleNext = () => {
+    if (page < totalPages) {
+      setPage((prev) => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (page > 1) {
+      setPage((prev) => prev - 1);
+    }
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+  };
+
+  // biến
   const filteredTasks = taskBuffer.filter((task) => {
-    if (filter === "all") return true;
-    if (filter === "active") return task.status === "active";
-    if (filter === "completed") return task.status === "completed";
-    return true;
+    switch (filter) {
+      case "active":
+        return task.status === "active";
+      case "completed":
+        return task.status === "complete";
+      default:
+        return true;
+    }
   });
+
+  const visibleTasks = filteredTasks.slice(
+    (page - 1) * visibleTaskLimit,
+    page * visibleTaskLimit
+  );
+
+  if (visibleTasks.length === 0) {
+    handlePrev();
+  }
+
+  const totalPages = Math.ceil(filteredTasks.length / visibleTaskLimit);
+
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [dateQuery]);
 
-    return (
+  useEffect(() => {
+    setPage(1);
+  }, [filter, dateQuery]);
+
+  return (
     <div className="min-h-screen w-full bg-[#fefcff] relative">
       {/* Dreamy Sky Pink Glow */}
       <div
@@ -64,21 +101,19 @@ const HomePage = () => {
           <Header />
 
           {/* Tạo Nhiệm Vụ */}
-          <AddTask 
-          handleNewTaskAdded={handleTaskChanged} 
-          />
+          <AddTask handleNewTaskAdded={handleTaskChanged} />
 
           {/* Thống Kê và Bộ lọc */}
           <StatsAndFilters
-            activeTaskCount={activeTaskCount}
-            completedTaskCount={completedTaskCount}
             filter={filter}
             setFilter={setFilter}
+            activeTasksCount={activeTaskCount}
+            completedTasksCount={completeTaskCount}
           />
 
           {/* Danh Sách Nhiệm Vụ */}
           <TaskList
-            filteredTasks={filteredTasks}
+            filteredTasks={visibleTasks}
             filter={filter}
             handleTaskChanged={handleTaskChanged}
           />
@@ -86,27 +121,27 @@ const HomePage = () => {
           {/* Phân Trang và Lọc Theo Date */}
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
             <TaskListPagination
-              // handleNext={() => setPage((current) => current + 1)}
-              // handlePrev={() => setPage((current) => Math.max(1, current - 1))}
-              // handlePageChange={setPage}
-              // page={page}
-              // totalPages={1}
+              handleNext={handleNext}
+              handlePrev={handlePrev}
+              handlePageChange={handlePageChange}
+              page={page}
+              totalPages={totalPages}
             />
             <DateTimeFilter
-              // dateQuery={dateQuery}
-              // setDateQuery={setDateQuery}
+              dateQuery={dateQuery}
+              setDateQuery={setDateQuery}
             />
           </div>
 
           {/* Chân Trang */}
           <Footer
-            activeTaskCount={activeTaskCount}
-            completedTaskCount={completedTaskCount}
+            activeTasksCount={activeTaskCount}
+            completedTasksCount={completeTaskCount}
           />
         </div>
       </div>
     </div>
   );
-}
+};
 
-export default HomePage
+export default HomePage;
